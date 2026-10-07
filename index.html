@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rijles Evaluatie & WhatsApp App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white p-4 shadow-md sticky top-0 z-30">
+    <div class="max-w-2xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        <i class="fa-solid fa-car-side"></i> Rijles Evaluatie
+      </h1>
+      <button onclick="openStudentModal()" class="bg-indigo-500 hover:bg-indigo-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
+        <i class="fa-solid fa-users"></i> Cursisten
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto p-4 space-y-6">
+
+    <!-- Cursist & Datum selectie -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Les Gegevens</h2>
+      
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Selecteer of voer cursist in</label>
+        <div class="flex gap-2">
+          <select id="studentSelect" onchange="onStudentSelect()" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+            <option value="">-- Kies opgeslagen cursist --</option>
+          </select>
+          <button onclick="openAddStudentModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium">
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Naam Cursist</label>
+          <input type="text" id="studentName" placeholder="Bijv. Jan Jansen" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Telefoonnummer (Optioneel)</label>
+          <input type="tel" id="studentPhone" placeholder="0612345678" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Datum van de les</label>
+        <input type="date" id="lessonDate" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+      </div>
+    </section>
+
+    <!-- Zoekbalk & Filters -->
+    <div class="sticky top-16 z-20 bg-slate-100 py-2 space-y-2">
+      <div class="relative">
+        <input type="text" id="searchInput" oninput="filterModules()" placeholder="Zoek op onderdeel (bijv. parkeren, hellingproef)..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+      </div>
+      
+      <!-- Module Tabs -->
+      <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs">
+        <button onclick="filterModuleTab('all')" class="mod-tab active bg-indigo-600 text-white px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">Alles</button>
+        <button onclick="filterModuleTab('mod1')" class="mod-tab bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">Module 1</button>
+        <button onclick="filterModuleTab('mod2')" class="mod-tab bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">Module 2</button>
+        <button onclick="filterModuleTab('mod3')" class="mod-tab bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">Module 3</button>
+        <button onclick="filterModuleTab('mod4')" class="mod-tab bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm">Module 4</button>
+      </div>
+    </div>
+
+    <!-- Modules Container -->
+    <div id="modulesContainer" class="space-y-6"></div>
+
+    <!-- Algemene Opmerkingen -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-2">
+      <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-regular fa-comment-dots text-indigo-600"></i> Algemene Opmerking / Conclusie
+      </h2>
+      <textarea id="generalNote" rows="3" placeholder="Typ hier de algemene feedback voor de cursist..." class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5"></textarea>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Bar met Verzenden -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-3 z-30 shadow-lg">
+    <div class="max-w-2xl mx-auto flex gap-3">
+      <button onclick="resetForm()" class="px-4 py-3 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-xl font-medium text-sm flex items-center justify-center gap-1 transition">
+        <i class="fa-solid fa-rotate-left"></i> Reset
+      </button>
+      <button onclick="sendWhatsApp()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 transition">
+        <i class="fa-brands fa-whatsapp text-lg"></i> Verstuur via WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal voor Cursisten Beheer -->
+  <div id="studentModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800">Mijn Cursisten</h3>
+        <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      <div id="studentList" class="flex-1 overflow-y-auto space-y-2 py-2"></div>
+      <button onclick="openAddStudentModal()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2">
+        <i class="fa-solid fa-plus"></i> Nieuwe Cursist Toevoegen
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal voor Cursist Toevoegen -->
+  <div id="addStudentModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800">Cursist Toevoegen</h3>
+        <button onclick="closeAddStudentModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Naam *</label>
+          <input type="text" id="newStudentName" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Telefoonnummer (bijv. 0612345678)</label>
+          <input type="tel" id="newStudentPhone" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg p-2.5">
+        </div>
+      </div>
+      <div class="flex gap-2 justify-end pt-2">
+        <button onclick="closeAddStudentModal()" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg">Annuleren</button>
+        <button onclick="saveNewStudent()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Alle 47 lesonderdelen verdeeld per module
+    const modulesData = [
+      {
+        id: "mod1",
+        title: "Module 1: Voertuigbediening & Basishandelingen",
+        items: [
+          "NXXT 1. controle buiten de auto",
+          "NXXT 2. controle in de auto",
+          "NXXT 3. instappen",
+          "NXXT 4. uitstappen",
+          "NXXT 5. zithouding",
+          "NXXT 6. stuurhouding",
+          "NXXT 7. afstellen spiegels",
+          "NXXT 8. starten en afzetten",
+          "NXXT 9. gas geven",
+          "NXXT 10. scan",
+          "NXXT 11. sturen",
+          "NXXT 12. positie",
+          "NXXT 13. remmen",
+          "NXXT 14. ontkoppelen",
+          "NXXT 15. stoppen",
+          "NXXT 16. koppelen",
+          "NXXT 17. schakelen",
+          "NXXT 18. technische wijze wegrijden"
+        ]
+      },
+      {
+        id: "mod2",
+        title: "Module 2: Eenvoudige Verkeerssituaties & Bijzondere Verrichtingen",
+        items: [
+          "NXXT 19. wegrijden en stoppen",
+          "NXXT 20. volgafstand",
+          "NXXT 21. ruimtekussen",
+          "NXXT 22. tegemoetkomen",
+          "NXXT 23. ingehaald worden",
+          "NXXT 24. kruispunten",
+          "NXXT 25. afslaan",
+          "NXXT 26. hellingproef",
+          "NXXT 27a. achteruitrijden (rechte lijn)",
+          "NXXT 27b. achteruitrijden (aangegeven bocht)",
+          "NXXT 28. parkeren",
+          "NXXT 28a. vooruit in file",
+          "NXXT 28b. achteruit in file",
+          "NXXT 28c. vooruit in file (helling)",
+          "NXXT 28d. achteruit in file (helling)",
+          "NXXT 28e. vooruit in vak (helling)",
+          "NXXT 28f. achteruit in vak (helling)",
+          "NXXT 28g. vooruit in vak (schuin / haaks)",
+          "NXXT 28h. achteruit in vak (schuin / haaks)",
+          "NXXT 29a. omkeren (halve draai)",
+          "NXXT 29b. omkeren (d.m.v. steken)"
+        ]
+      },
+      {
+        id: "mod3",
+        title: "Module 3: Complexe Verkeerssituaties",
+        items: [
+          "NXXT 30. rijstrook wisselen / zijdelings verplaatsen",
+          "NXXT 31. voorbijgaan",
+          "NXXT 32. inhalen",
+          "NXXT 33. invoegen",
+          "NXXT 34. uitrijden (uitvoegen)",
+          "NXXT 35. rotondes",
+          "NXXT 36. erven",
+          "NXXT 37. spoorwegovergang",
+          "NXXT 38. voetgangersoversteekplaats (VOP)",
+          "NXXT 39. tram- en bushalte"
+        ]
+      },
+      {
+        id: "mod4",
+        title: "Module 4: Zelfstandige & Verantwoorde Verkeersdeelname",
+        items: [
+          "NXXT 40. moeilijke omstandigheden",
+          "NXXT 41. ritvoorbereiding",
+          "NXXT 42. specifieke omstandigheden",
+          "NXXT 43. milieuverantwoord rijden",
+          "NXXT 44. defensief rijden",
+          "NXXT 45. aangepast en besluitvaardig rijden",
+          "NXXT 46. mentaliteit en verantwoordelijkheid",
+          "NXXT 47. navigatie"
+        ]
+      }
+    ];
+
+    let students = JSON.parse(localStorage.getItem("rijles_students") || "[]");
+    let currentModuleFilter = "all";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("lessonDate").valueAsDate = new Date();
+      renderModules();
+      updateStudentSelect();
+    });
+
+    function renderModules() {
+      const container = document.getElementById("modulesContainer");
+      container.innerHTML = "";
+
+      modulesData.forEach((mod) => {
+        const modSection = document.createElement("section");
+        modSection.className = `module-section bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${mod.id}`;
+        
+        let itemsHtml = mod.items.map((item, idx) => {
+          const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, "_");
+          return `
+            <div class="item-card p-3 border-b border-slate-100 last:border-b-0 space-y-2" data-name="${item.toLowerCase()}">
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-xs font-semibold text-slate-800">${item}</span>
+                <div class="flex items-center gap-1">
+                  <select id="score_${itemKey}" class="bg-slate-100 border border-slate-300 text-xs font-semibold rounded-lg p-1.5 focus:ring-indigo-500">
+                    <option value="">- Score -</option>
+                    <option value="1 (Slecht)">1 - Slecht</option>
+                    <option value="2 (Matig)">2 - Matig</option>
+                    <option value="3 (Voldoende)">3 - Voldoende</option>
+                    <option value="4 (Goed)">4 - Goed</option>
+                    <option value="5 (Uitstekend)">5 - Uitstekend</option>
+                  </select>
+                </div>
+              </div>
+              <input type="text" id="note_${itemKey}" placeholder="Opmerking toevoegen..." class="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg p-2">
+            </div>
+          `;
+        }).join("");
+
+        modSection.innerHTML = `
+          <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 font-semibold text-sm text-indigo-900 flex justify-between items-center">
+            <span>${mod.title}</span>
+            <span class="text-xs font-normal text-slate-500">${mod.items.length} onderdelen</span>
+          </div>
+          <div class="divide-y divide-slate-100">
+            ${itemsHtml}
+          </div>
+        `;
+        container.appendChild(modSection);
+      });
+    }
+
+    function filterModules() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      document.querySelectorAll(".item-card").forEach((card) => {
+        const name = card.getAttribute("data-name");
+        if (name.includes(query)) {
+          card.classList.remove("hidden");
+        } else {
+          card.classList.add("hidden");
+        }
+      });
+    }
+
+    function filterModuleTab(modId) {
+      currentModuleFilter = modId;
+      document.querySelectorAll(".mod-tab").forEach(b => {
+        b.classList.remove("bg-indigo-600", "text-white");
+        b.classList.add("bg-white", "text-slate-600");
+      });
+      event.target.classList.remove("bg-white", "text-slate-600");
+      event.target.classList.add("bg-indigo-600", "text-white");
+
+      document.querySelectorAll(".module-section").forEach((sec) => {
+        if (modId === "all" || sec.classList.contains(modId)) {
+          sec.classList.remove("hidden");
+        } else {
+          sec.classList.add("hidden");
+        }
+      });
+    }
+
+    // WhatsApp Logica
+    function sendWhatsApp() {
+      const name = document.getElementById("studentName").value.trim();
+      let phone = document.getElementById("studentPhone").value.trim().replace(/[^0-9]/g, "");
+      const date = document.getElementById("lessonDate").value;
+      const genNote = document.getElementById("generalNote").value.trim();
+
+      let text = `🚗 *Rijles Evaluatie*\n`;
+      if (name) text += `👤 *Cursist:* ${name}\n`;
+      if (date) text += `📅 *Datum:* ${date}\n`;
+      text += `-----------------------------------\n\n`;
+
+      let hasEvaluations = false;
+
+      modulesData.forEach((mod) => {
+        let modHasScores = false;
+        let modText = `📌 *${mod.title}*\n`;
+
+        mod.items.forEach((item) => {
+          const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, "_");
+          const score = document.getElementById(`score_${itemKey}`).value;
+          const note = document.getElementById(`note_${itemKey}`).value.trim();
+
+          if (score || note) {
+            hasEvaluations = true;
+            modHasScores = true;
+            modText += `• *${item}*: ${score || 'Beoordeeld'}\n`;
+            if (note) modText += `  └ _Opmerking:_ ${note}\n`;
+          }
+        });
+
+        if (modHasScores) {
+          text += modText + `\n`;
+        }
+      });
+
+      if (!hasEvaluations) {
+        alert("Vul A.U.B. voor minimaal één onderdeel een score of opmerking in.");
+        return;
+      }
+
+      if (genNote) {
+        text += `💬 *Algemene Opmerking:*\n${genNote}\n\n`;
+      }
+
+      text += `Succes met je volgende les! 👍`;
+
+      if (phone.startsWith("06")) {
+        phone = "316" + phone.substring(2);
+      } else if (phone.startsWith("0")) {
+        phone = "31" + phone.substring(1);
+      }
+
+      const encodedText = encodeURIComponent(text);
+      let waUrl = "";
+
+      if (phone) {
+        waUrl = `https://wa.me/${phone}?text=${encodedText}`;
+      } else {
+        waUrl = `https://wa.me/?text=${encodedText}`;
+      }
+
+      window.open(waUrl, "_blank");
+    }
+
+    // Cursistenbeheer logica
+    function updateStudentSelect() {
+      const select = document.getElementById("studentSelect");
+      select.innerHTML = `<option value="">-- Kies opgeslagen cursist --</option>`;
+      students.forEach((s, idx) => {
+        select.innerHTML += `<option value="${idx}">${s.name} ${s.phone ? '(' + s.phone + ')' : ''}</option>`;
+      });
+    }
+
+    function onStudentSelect() {
+      const idx = document.getElementById("studentSelect").value;
+      if (idx !== "") {
+        document.getElementById("studentName").value = students[idx].name;
+        document.getElementById("studentPhone").value = students[idx].phone || "";
+      }
+    }
+
+    function openStudentModal() {
+      const list = document.getElementById("studentList");
+      list.innerHTML = "";
+      if (students.length === 0) {
+        list.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">Nog geen cursisten opgeslagen.</p>`;
+      } else {
+        students.forEach((s, idx) => {
+          list.innerHTML += `
+            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div>
+                <p class="font-semibold text-slate-800 text-sm">${s.name}</p>
+                <p class="text-xs text-slate-500">${s.phone || 'Geen telefoonnummer'}</p>
+              </div>
+              <button onclick="deleteStudent(${idx})" class="text-rose-500 hover:text-rose-700 p-2">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          `;
+        });
+      }
+      document.getElementById("studentModal").classList.remove("hidden");
+    }
+
+    function closeStudentModal() {
+      document.getElementById("studentModal").classList.add("hidden");
+    }
+
+    function openAddStudentModal() {
+      document.getElementById("newStudentName").value = "";
+      document.getElementById("newStudentPhone").value = "";
+      document.getElementById("addStudentModal").classList.remove("hidden");
+    }
+
+    function closeAddStudentModal() {
+      document.getElementById("addStudentModal").classList.add("hidden");
+    }
+
+    function saveNewStudent() {
+      const name = document.getElementById("newStudentName").value.trim();
+      const phone = document.getElementById("newStudentPhone").value.trim();
+
+      if (!name) {
+        alert("Vul minimaal een naam in.");
+        return;
+      }
+
+      students.push({ name, phone });
+      localStorage.setItem("rijles_students", JSON.stringify(students));
+      updateStudentSelect();
+      closeAddStudentModal();
+      openStudentModal();
+    }
+
+    function deleteStudent(idx) {
+      if (confirm("Weet je zeker dat je deze cursist wilt verwijderen?")) {
+        students.splice(idx, 1);
+        localStorage.setItem("rijles_students", JSON.stringify(students));
+        updateStudentSelect();
+        openStudentModal();
+      }
+    }
+
+    function resetForm() {
+      if (confirm("Weet je zeker dat je alle ingevulde velden wilt wissen?")) {
+        document.getElementById("studentName").value = "";
+        document.getElementById("studentPhone").value = "";
+        document.getElementById("studentSelect").value = "";
+        document.getElementById("generalNote").value = "";
+        document.getElementById("searchInput").value = "";
+        
+        modulesData.forEach((mod) => {
+          mod.items.forEach((item) => {
+            const itemKey = item.toLowerCase().replace(/[^a-z0-9]/g, "_");
+            document.getElementById(`score_${itemKey}`).value = "";
+            document.getElementById(`note_${itemKey}`).value = "";
+          });
+        });
+        filterModules();
+      }
+    }
+  </script>
+</body>
+</html>
